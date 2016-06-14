@@ -1,0 +1,28 @@
+- name: Suspend ASG and acquire instance list
+  suspend_asg:
+    suspend_asg_name: "{{ suspend_asg_name }}"
+    suspend_asg_process_list: "{{ suspend_asg_process_list }}"
+
+- name: Set cfn_alarm fact
+  set_fact: 
+    cfn_alarm:
+      name: "{{ item | replace('-','') }}Recovery"
+      namespace: "AWS/EC2"
+      metric: "StatusCheckFailed_System"
+      eval_periods: "{{ suspend_asg_recovery_minutes }}"
+      statistic: "Minimum"
+      threshold: 0
+      period_length: 60
+      comparison_operator: "GreaterThanOrEqualToThreshold"
+      dimensions:
+        - name: "InstanceId"
+          value: "{{ item }}"
+      action_arn: "arn:aws:automate:us-west-2:ec2:recover"
+  with_items: "{{ asg_instance_ids }}"
+  register: result
+
+- name: Set cloudformation_alarms fact
+  set_fact:
+    cloudwatch_alarms: "{{ result.results | map(attribute='ansible_facts.cfn_alarm') | list }}"
+
+- debug: var=cloudformation_alarms

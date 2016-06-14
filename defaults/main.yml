@@ -1,0 +1,7 @@
+suspend_asg_process_list:
+  - Launch
+  - Terminate
+  - ReplaceUnhealthy
+  - AZRebalance
+  - ScheduledActions
+suspend_asg_recovery_minutes: "3"
